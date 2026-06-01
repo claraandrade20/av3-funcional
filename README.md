@@ -1,20 +1,19 @@
-# 🍎 Calculadora de Calorias
+# Calculadora de Calorias
 
 > Projeto final da disciplina de Programação Funcional (T300) - Universidade de Fortaleza  
-> Professor: Gilson Pereira do Carmo Filho | Semestre: 2026.1 | Avaliação: AV3
 
-## 📋 Sobre o Projeto
+## Sobre o Projeto
 
 A Calculadora de Calorias é uma aplicação completa desenvolvida em Clojure que permite aos usuários monitorar seu consumo e gasto calórico através do registro de alimentos consumidos e atividades físicas realizadas. O sistema ajuda no planejamento de uma rotina alimentar e de exercícios para alcançar objetivos de saúde, como ganho de massa muscular ou perda de peso.
 
-## 🎯 Justificativa
+## Justificativa
 
 Com a crescente preocupação com a saúde, as pessoas buscam ferramentas para:
 - **Monitorar o consumo calórico** - identificar hábitos alimentares e fazer escolhas mais conscientes
 - **Acompanhar a perda calórica** - identificar quais atividades físicas são mais eficazes
 - **Planejar alimentação e exercícios** - tomar decisões assertivas para alcançar objetivos de saúde
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 O projeto é dividido em dois componentes principais:
 
@@ -61,7 +60,7 @@ O projeto é dividido em dois componentes principais:
   - [Rapid API](https://rapidapi.com/) - Para informações nutricionais de alimentos
   - [API Ninjas](https://api-ninjas.com/) - Para cálculo de calorias de exercícios
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 trabfinal-api/
@@ -88,7 +87,7 @@ trabfinal-api/
 └── README.md                    # Este arquivo
 ```
 
-## 🚀 Como Executar
+## Como Executar
 
 ### Pré-requisitos
 
@@ -170,7 +169,7 @@ cd frontend
 lein repl
 ```
 
-## 📝 Funcionalidades
+## Funcionalidades
 
 O sistema permite realizar as seguintes operações:
 
@@ -194,7 +193,7 @@ O sistema permite realizar as seguintes operações:
 - **Extrato de transações**: visualizar todas as transações em um período
 - **Saldo de calorias**: consultar saldo (ganho - perda) em um período
 
-## 🔌 Endpoints da API (a implementar)
+## Endpoints da API (a implementar)
 
 ### Usuário
 - `POST /api/usuario` - Cadastrar dados do usuário
@@ -210,7 +209,7 @@ O sistema permite realizar as seguintes operações:
 - `GET /api/extrato?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` - Obter extrato de transações
 - `GET /api/saldo?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` - Obter saldo de calorias
 
-## 📊 Estrutura de Dados
+## Estrutura de Dados
 
 As transações são representadas como mapas (hash-maps) e armazenadas em listas:
 
@@ -236,9 +235,7 @@ As transações são representadas como mapas (hash-maps) e armazenadas em lista
  :sexo "M"}
 ```
 
-O estado da aplicação é gerenciado com `atoms` para manter a base de dados em memória.
-
-## ⚙️ Princípios de Programação Funcional
+## Princípios de Programação Funcional
 
 O projeto segue os conceitos fundamentais da programação funcional:
 
@@ -256,39 +253,12 @@ O projeto segue os conceitos fundamentais da programação funcional:
 - [Ring Documentation](https://github.com/ring-clojure/ring)
 - [Compojure Documentation](https://github.com/weavejester/compojure)
 
-## ✅ Critérios de Avaliação
-
-| Entrega | Pontos |
-|---------|--------|
-| Back-end | 1,0 |
-| Front-end | 1,0 |
-| **TOTAL** | **2,0** |
-
-### O que será avaliado:
-- ✅ Execução correta das funcionalidades
-- ✅ Conformidade com os conceitos de programação funcional
-- ✅ Uso apropriado de funções de ordem superior
-- ✅ Evitar estruturas imperativas (loops)
-- ✅ Qualidade do código e organização
-- ✅ Apresentação e arguição sobre o código
-
-## ⚠️ Observações Importantes
-
-- ⏰ **Prazo**: 3 semanas
-- 👥 **Equipe**: Individual ou dupla
-- 🚫 **Ferramentas de teste** (Postman/Swagger) não são aceitas como frontend
-- 📝 **Apresentação obrigatória** - trabalhos não apresentados recebem nota ZERO
-- 🔍 **Verificação de plágio** - cópias resultarão em nota ZERO
 
 ## 🤝 Autores
 
-- [Seu Nome Aqui]
-- [Nome do Parceiro (se houver)]
+- [Maria Clara Andrade Gomes]
+- [Paulo Alencar]
 
-## 📅 Data de Entrega
-
-- **Semestre**: 2026.1
-- **Prazo**: [Data específica da entrega]
 
 ## 📄 Licença
 
@@ -298,4 +268,3 @@ Este é um projeto acadêmico desenvolvido para fins educacionais na disciplina 
 
 **Universidade de Fortaleza**  
 Disciplina: Programação Funcional (T300)  
-Professor: Gilson Pereira do Carmo Filho
