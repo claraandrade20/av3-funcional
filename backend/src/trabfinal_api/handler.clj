@@ -1,9 +1,11 @@
 (ns trabfinal-api.handler
   (:require [compojure.core :refer :all]
             [compojure.route :as route]
+            [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
-            [trabfinal-api.services :as services]))
+            [trabfinal-api.services :as services])
+  (:gen-class))
 
 ;; ── Middleware de CORS ────────────────────────────────────────────────────────
 
@@ -63,3 +65,8 @@
       wrap-json-response
       wrap-cors
       (wrap-defaults api-defaults)))
+
+(defn -main [& args]
+  (let [porta (Integer/parseInt (or (first args) "3000"))]
+    (println (str "Servidor iniciando na porta " porta "..."))
+    (run-jetty app {:port porta :join? true})))
