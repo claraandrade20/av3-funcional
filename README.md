@@ -19,10 +19,10 @@ trabfinal-api/
 │   ├── test/
 │   └── project.clj
 │
-└── README.md                   # Este arquivo
+└── README.md                 
 ```
 
-## 🚀 Como Executar
+## Como Executar
 
 A arquitetura exige **dois terminais simultâneos**:
 
@@ -46,7 +46,7 @@ lein run
 
 **Resultado esperado:** Aplicação em `http://localhost:3001`
 
-## 🎯 Funcionalidades
+## Funcionalidades
 
 | Recurso | Descrição |
 |---------|-----------|
@@ -56,7 +56,7 @@ lein run
 | **Extrato** | Lista todas as transações em período |
 | **Saldo** | Balanço calórico (consumo - gasto) |
 
-## 🏗 Principais Endpoints
+## Principais Endpoints
 
 ```
 POST   /api/usuario              # Registrar usuário
@@ -67,7 +67,7 @@ GET    /api/extrato              # Listar transações
 GET    /api/saldo                # Calcular balanço
 ```
 
-## 📊 Modelo de Dados
+## Modelo de Dados
 
 ```clojure
 ;; Alimento
@@ -89,7 +89,7 @@ GET    /api/saldo                # Calcular balanço
  :peso 75.5}
 ```
 
-## 🔧 Pré-requisitos
+## Pré-requisitos
 
 | Software | Versão |
 |----------|--------|
@@ -102,7 +102,7 @@ java -version
 lein version
 ```
 
-## ⚙ Testes
+## Testes
 
 ```bash
 # Backend
@@ -112,14 +112,14 @@ cd backend && lein test
 cd frontend && lein test
 ```
 
-## 💻 Desenvolvimento com REPL
+## Desenvolvimento com REPL
 
 ```bash
 cd backend   # ou cd frontend
 lein repl
 ```
 
-## 📐 Princípios Funcionais Utilizados
+## Princípios Funcionais Utilizados
 
 - ✅ **Sem Loops Imperativos**: Zero `loop`, `while`, `for`, `doseq`, `dotimes`
 - ✅ **Imutabilidade Total**: Dados armazenados em Atoms
@@ -127,12 +127,12 @@ lein repl
 - ✅ **Composição**: Funções pequenas e reutilizáveis
 - ✅ **Recursão**: Uso de `recur` para iterações
 
-## 🔌 Integrações Externas
+## Integrações Externas
 
 - **RapidAPI** - Informações nutricionais
 - **API Ninjas** - Cálculo de gasto calórico
 
-## 📚 Tecnologias
+## Tecnologias
 
 | Componente | Tecnologia |
 |-----------|-----------|
@@ -142,14 +142,14 @@ lein repl
 | HTTP Client | clj-http |
 | JSON | Cheshire |
 
-## 🚫 Limitações Atuais
+## Limitações Atuais
 
 - Dados em memória (não persiste após reiniciar)
 - Sem autenticação de usuário
 - Sem suporte a múltiplos usuários
 - Sem cache de APIs externas
 
-## 👥 Autores
+## Autores
 
 - Clara Andrade - https://github.com/claraandrade20
 - Paulo Alencar - https://github.com/opaulosaa
@@ -158,7 +158,7 @@ lein repl
 **Instituição:** Universidade de Fortaleza  
 **Data:** Junho de 2026
 
-## 📄 Licença
+## Licença
 
 Projeto acadêmico para fins educacionais.
 
@@ -169,5 +169,6 @@ Universidade de Fortaleza - Uso Acadêmico
 
 ---
 
-**Repositório:** [https://github.com/claraandrade20/av3-Progamacao_funcional](https://github.com/claraandrade20/av3-progamacao_funcional)
+**Repositório:** https://github.com/claraandrade20/av3-funcional
+
 
