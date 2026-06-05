@@ -151,8 +151,8 @@ lein repl
 
 ## 👥 Autores
 
-- Maria Clara Andrade Gomes
-- Paulo Alencar
+- Clara Andrade - https://github.com/claraandrade20
+- Paulo Alencar - https://github.com/opaulosaa
 
 **Disciplina:** Programação Funcional (T300)  
 **Instituição:** Universidade de Fortaleza  
@@ -163,7 +163,7 @@ lein repl
 Projeto acadêmico para fins educacionais.
 
 ```
-Copyright © 2026 Maria Clara Andrade Gomes, Paulo Alencar
+Copyright © 2026 Clara Andrade, Paulo Alencar
 Universidade de Fortaleza - Uso Acadêmico
 ```
 
