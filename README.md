@@ -1,270 +1,173 @@
-# Calculadora de Calorias
+# Calculadora de Calorias (Clojure REST API + Web)
 
-> Projeto final da disciplina de Programação Funcional (T300) - Universidade de Fortaleza  
+Projeto acadêmico desenvolvido em **Clojure** para a disciplina de **Programação Funcional (T300)** na Universidade de Fortaleza. O sistema monitora consumo e gasto calórico através de um backend REST e interface web responsiva.
 
-## Sobre o Projeto
-
-A Calculadora de Calorias é uma aplicação completa desenvolvida em Clojure que permite aos usuários monitorar seu consumo e gasto calórico através do registro de alimentos consumidos e atividades físicas realizadas. O sistema ajuda no planejamento de uma rotina alimentar e de exercícios para alcançar objetivos de saúde, como ganho de massa muscular ou perda de peso.
-
-## Justificativa
-
-Com a crescente preocupação com a saúde, as pessoas buscam ferramentas para:
-- **Monitorar o consumo calórico** - identificar hábitos alimentares e fazer escolhas mais conscientes
-- **Acompanhar a perda calórica** - identificar quais atividades físicas são mais eficazes
-- **Planejar alimentação e exercícios** - tomar decisões assertivas para alcançar objetivos de saúde
-
-## Arquitetura
-
-O projeto é dividido em dois componentes principais:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                  Calculadora de Calorias                      │
-├────────────────────────────┬─────────────────────────────────┤
-│         Front-end          │           Back-end              │
-├────────────────────────────┼─────────────────────────────────┤
-│                            │                                 │
-│  ┌──────────────────┐     │      ┌────────────┐            │
-│  │   Interface com  │◄────┼─────►│    API     │            │
-│  │     Usuário      │     │      └─────┬──────┘            │
-│  └──────────────────┘     │            │                    │
-│                            │  ┌─────────┴─────────┐         │
-│         HTTP/JSON          │  │                   │         │
-│                            │  ▼                   ▼         │
-│                            │ ┌──────────┐  ┌──────────┐    │
-│                            │ │   API    │  │   API    │    │
-│                            │ │ Externa  │  │ Externa  │    │
-│                            │ │Alimentos │  │Exercícios│    │
-│                            │ └──────────┘  └──────────┘    │
-└────────────────────────────┴─────────────────────────────────┘
-```
-
-### Backend
-- **Linguagem**: Clojure
-- **Framework**: Ring + Compojure
-- **Armazenamento**: Em memória (Atoms)
-- **Comunicação**: HTTP/JSON
-
-### Frontend
-- **Linguagem**: Clojure
-- **Interface**: Desktop (linha de comando ou gráfica)
-- **Comunicação**: Cliente HTTP para a API do backend
-
-## 🛠️ Tecnologias Utilizadas
-
-- **Clojure 1.10+** - Linguagem de programação funcional
-- **Leiningen** - Gerenciador de projetos e dependências
-- **Ring** - Servidor HTTP para Clojure
-- **Compojure** - Biblioteca de roteamento web
-- **APIs Externas**:
-  - [Rapid API](https://rapidapi.com/) - Para informações nutricionais de alimentos
-  - [API Ninjas](https://api-ninjas.com/) - Para cálculo de calorias de exercícios
-
-## Estrutura do Projeto
 
 ```
 trabfinal-api/
-├── backend/
-│   ├── src/
-│   │   └── trabfinal_api/
-│   │       └── handler.clj      # Rotas e lógica da API
+├── backend/                    # Servidor REST (API)
+│   ├── src/trabfinal_api/
+│   │   ├── handler.clj         # Rotas HTTP
+│   │   ├── services.clj        # Lógica de negócio
+│   │   └── db.clj              # Gerenciamento de dados (Atoms)
 │   ├── test/
-│   │   └── trabfinal_api/
-│   │       └── handler_test.clj # Testes do backend
-│   ├── resources/
-│   │   └── public/              # Arquivos públicos
-│   └── project.clj              # Configuração do projeto backend
+│   └── project.clj
 │
-├── frontend/
-│   ├── src/
-│   │   └── trabfinal_app/
-│   │       └── core.clj         # Interface com usuário
+├── frontend/                   # Aplicação Web
+│   ├── src/trabfinal_app/
+│   │   └── core.clj            # Interface com usuário (Hiccup)
 │   ├── test/
-│   │   └── trabfinal_app/
-│   │       └── core_test.clj    # Testes do frontend
-│   └── project.clj              # Configuração do projeto frontend
+│   └── project.clj
 │
-└── README.md                    # Este arquivo
+└── README.md                   # Este arquivo
 ```
 
-## Como Executar
+## 🚀 Como Executar
 
-### Pré-requisitos
+A arquitetura exige **dois terminais simultâneos**:
 
-1. **Java JDK 8+** instalado
-   ```bash
-   java -version
-   ```
+### Terminal 1 - Backend (Servidor da API)
 
-2. **Leiningen** instalado
-   ```bash
-   lein version
-   ```
-   Se não tiver instalado, siga as instruções em [leiningen.org](https://leiningen.org/)
-
-### Executando o Backend (API)
-
-1. Navegue até o diretório do backend:
-   ```bash
-   cd backend
-   ```
-
-2. Instale as dependências:
-   ```bash
-   lein deps
-   ```
-
-3. Inicie o servidor:
-   ```bash
-   lein ring server
-   ```
-   
-   A API estará disponível em `http://localhost:3000`
-
-4. Para executar em modo headless (sem abrir o navegador):
-   ```bash
-   lein ring server-headless
-   ```
-
-5. Para executar os testes:
-   ```bash
-   lein test
-   ```
-
-### Executando o Frontend
-
-1. Navegue até o diretório do frontend:
-   ```bash
-   cd frontend
-   ```
-
-2. Instale as dependências:
-   ```bash
-   lein deps
-   ```
-
-3. Execute a aplicação:
-   ```bash
-   lein run
-   ```
-
-4. Para executar os testes:
-   ```bash
-   lein test
-   ```
-
-### Executando em Desenvolvimento
-
-Para desenvolvimento, você pode usar o REPL:
-
-**Backend:**
 ```bash
 cd backend
-lein repl
+lein ring server
 ```
 
-**Frontend:**
+*Opcional: use `lein ring server-headless` para não abrir navegador*
+
+**Resultado esperado:** API disponível em `http://localhost:3000`
+
+### Terminal 2 - Frontend (Interface Web)
+
 ```bash
 cd frontend
+lein run
+```
+
+**Resultado esperado:** Aplicação em `http://localhost:3001`
+
+## 🎯 Funcionalidades
+
+| Recurso | Descrição |
+|---------|-----------|
+| **Cadastro de Usuário** | Nome, peso - dados pessoais |
+| **Registro de Alimentos** | Alimento, quantidade (g), data |
+| **Registro de Exercícios** | Tipo, duração (min), data |
+| **Extrato** | Lista todas as transações em período |
+| **Saldo** | Balanço calórico (consumo - gasto) |
+
+## 🏗 Principais Endpoints
+
+```
+POST   /api/usuario              # Registrar usuário
+GET    /api/usuario              # Consultar usuário
+POST   /api/alimento             # Registrar alimento
+POST   /api/exercicio            # Registrar exercício
+GET    /api/extrato              # Listar transações
+GET    /api/saldo                # Calcular balanço
+```
+
+## 📊 Modelo de Dados
+
+```clojure
+;; Alimento
+{:tipo :alimento
+ :nome "Frango Grelhado"
+ :quantidade 150
+ :data "2026-06-05"
+ :calorias 165}
+
+;; Exercício
+{:tipo :exercicio
+ :nome "Corrida"
+ :duracao 30
+ :data "2026-06-05"
+ :calorias -300}
+
+;; Usuário
+{:nome "João Silva"
+ :peso 75.5}
+```
+
+## 🔧 Pré-requisitos
+
+| Software | Versão |
+|----------|--------|
+| Java JDK | 8+ |
+| Leiningen | 2.0+ |
+
+```bash
+# Verificar instalações
+java -version
+lein version
+```
+
+## ⚙ Testes
+
+```bash
+# Backend
+cd backend && lein test
+
+# Frontend
+cd frontend && lein test
+```
+
+## 💻 Desenvolvimento com REPL
+
+```bash
+cd backend   # ou cd frontend
 lein repl
 ```
 
-## Funcionalidades
+## 📐 Princípios Funcionais Utilizados
 
-O sistema permite realizar as seguintes operações:
+- ✅ **Sem Loops Imperativos**: Zero `loop`, `while`, `for`, `doseq`, `dotimes`
+- ✅ **Imutabilidade Total**: Dados armazenados em Atoms
+- ✅ **Funções Puras**: map, filter, reduce para transformações
+- ✅ **Composição**: Funções pequenas e reutilizáveis
+- ✅ **Recursão**: Uso de `recur` para iterações
 
-### 1. Cadastro de Usuário
-- Registrar dados pessoais: altura, peso, idade e sexo
-- Consultar dados cadastrados
+## 🔌 Integrações Externas
 
-### 2. Registro de Alimentos
-- Informar alimento consumido
-- Informar data do consumo
-- Informar quantidade consumida
-- Cálculo automático de calorias via API externa
+- **RapidAPI** - Informações nutricionais
+- **API Ninjas** - Cálculo de gasto calórico
 
-### 3. Registro de Atividades Físicas
-- Informar atividade realizada
-- Informar data da realização
-- Informar tempo de duração
-- Cálculo automático de calorias perdidas via API externa
+## 📚 Tecnologias
 
-### 4. Consultas
-- **Extrato de transações**: visualizar todas as transações em um período
-- **Saldo de calorias**: consultar saldo (ganho - perda) em um período
+| Componente | Tecnologia |
+|-----------|-----------|
+| Linguagem | Clojure |
+| Web Backend | Ring + Compojure |
+| Frontend HTML | Hiccup |
+| HTTP Client | clj-http |
+| JSON | Cheshire |
 
-## Endpoints da API (a implementar)
+## 🚫 Limitações Atuais
 
-### Usuário
-- `POST /api/usuario` - Cadastrar dados do usuário
-- `GET /api/usuario` - Consultar dados do usuário
+- Dados em memória (não persiste após reiniciar)
+- Sem autenticação de usuário
+- Sem suporte a múltiplos usuários
+- Sem cache de APIs externas
 
-### Alimentos
-- `POST /api/alimento` - Registrar consumo de alimento
+## 👥 Autores
 
-### Exercícios
-- `POST /api/exercicio` - Registrar realização de exercício
+- Maria Clara Andrade Gomes
+- Paulo Alencar
 
-### Relatórios
-- `GET /api/extrato?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` - Obter extrato de transações
-- `GET /api/saldo?inicio=YYYY-MM-DD&fim=YYYY-MM-DD` - Obter saldo de calorias
-
-## Estrutura de Dados
-
-As transações são representadas como mapas (hash-maps) e armazenadas em listas:
-
-```clojure
-;; Exemplo de transação de alimento
-{:tipo :alimento
- :nome "Banana"
- :data "2026-06-01"
- :quantidade 100  ; gramas
- :calorias 89}
-
-;; Exemplo de transação de exercício
-{:tipo :exercicio
- :nome "Corrida"
- :data "2026-06-01"
- :duracao 30  ; minutos
- :calorias -300}
-
-;; Dados do usuário
-{:altura 170   ; cm
- :peso 70      ; kg
- :idade 25
- :sexo "M"}
-```
-
-## Princípios de Programação Funcional
-
-O projeto segue os conceitos fundamentais da programação funcional:
-
-- ✅ **Funções de ordem superior** - map, filter, reduce
-- ✅ **Pureza** - funções sem efeitos colaterais
-- ✅ **Recursão de cauda** - substituição de loops
-- ✅ **Imutabilidade** - estruturas de dados imutáveis
-- ✅ **Composição de funções** - funções pequenas e compostas
-- ❌ **Sem loops imperativos** - não usar LOOP, WHILE, FOR, DOSEQ, DOTIMES
-
-## 📚 Referências
-
-- Livro: **Programação Funcional: Uma Introdução em Clojure** (Capítulos 9 a 13)
-- [Documentação do Clojure](https://clojure.org/)
-- [Ring Documentation](https://github.com/ring-clojure/ring)
-- [Compojure Documentation](https://github.com/weavejester/compojure)
-
-
-## 🤝 Autores
-
-- [Maria Clara Andrade Gomes]
-- [Paulo Alencar]
-
+**Disciplina:** Programação Funcional (T300)  
+**Instituição:** Universidade de Fortaleza  
+**Data:** Junho de 2026
 
 ## 📄 Licença
 
-Este é um projeto acadêmico desenvolvido para fins educacionais na disciplina de Programação Funcional da Universidade de Fortaleza.
+Projeto acadêmico para fins educacionais.
+
+```
+Copyright © 2026 Maria Clara Andrade Gomes, Paulo Alencar
+Universidade de Fortaleza - Uso Acadêmico
+```
 
 ---
 
-**Universidade de Fortaleza**  
-Disciplina: Programação Funcional (T300)  
+**Repositório:** https://github.com/claraandrade20/av3-funcional
+
