@@ -169,6 +169,4 @@ Universidade de Fortaleza - Uso Acadêmico
 
 ---
 
-**Repositório:** https://github.com/claraandrade20/av3-funcional
-
 
