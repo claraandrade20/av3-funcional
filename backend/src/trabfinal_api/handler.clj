@@ -21,14 +21,11 @@
       (cors-headers {:status 200 :body ""})
       (cors-headers (handler request)))))
 
-;; ── Rotas ─────────────────────────────────────────────────────────────────────
-
 (defroutes api-routes
 
   (GET "/" []
     {:status 200 :body {:status "ok" :mensagem "Calculadora de Calorias API"}})
 
-  ;; Usuário
   (POST "/api/usuario" {body :body}
     (services/salvar-usuario! body)
     {:status 201 :body body})
@@ -38,17 +35,14 @@
       {:status 200 :body usuario}
       {:status 404 :body {:erro "Usuário não cadastrado"}}))
 
-  ;; Alimentos
   (POST "/api/alimento" {body :body}
     (let [transacao (services/registrar-alimento! body)]
       {:status 201 :body transacao}))
 
-  ;; Exercícios
   (POST "/api/exercicio" {body :body}
     (let [transacao (services/registrar-exercicio! body)]
       {:status 201 :body transacao}))
 
-  ;; Relatórios
   (GET "/api/extrato" [inicio fim]
     {:status 200 :body (services/obter-extrato inicio fim)})
 
@@ -57,7 +51,6 @@
 
   (route/not-found {:status 404 :body {:erro "Rota não encontrada"}}))
 
-;; ── Aplicação principal ───────────────────────────────────────────────────────
 
 (def app
   (-> api-routes

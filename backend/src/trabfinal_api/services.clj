@@ -5,8 +5,6 @@
 
 (def api-key (or (System/getenv "API_NINJAS_KEY") ""))
 
-;; ── Base de dados local de calorias ───────────────────────────────────────────
-
 (def alimentos-calorias
   {"frango"         165
    "carne"          250
@@ -43,8 +41,6 @@
    "boxe"           16
    "salto"          10})
 
-;; ── Funções puras (sem efeitos colaterais) ────────────────────────────────────
-
 (defn data-no-periodo? [data inicio fim]
   (and (>= (compare data inicio) 0)
        (<= (compare data fim) 0)))
@@ -55,14 +51,10 @@
 (defn calcular-saldo [transacoes]
   (reduce + 0 (map :calorias transacoes)))
 
-;; ── Busca de calorias (local com fallback para API) ───────────────────────────
-
 (defn buscar-calorias-alimento [nome quantidade]
   (let [nome-lower (clojure.string/lower-case nome)]
     (if-let [cal-por-100g (alimentos-calorias nome-lower)]
-      ;; Calcular calorias pela quantidade em gramas
       (int (* cal-por-100g (/ quantidade 100)))
-      ;; Fallback: tentar API se disponível
       (try
         (let [query    (str quantidade "g " nome)
               resposta (http/get "https://api.api-ninjas.com/v1/nutrition"
@@ -74,15 +66,13 @@
               itens    (:body resposta)]
           (when (seq itens)
             (int (:calories (first itens)))))
-        (catch Exception e 100))))) ; Valor padrão
+        (catch Exception e 100))))) 
 
 (defn buscar-calorias-exercicio [atividade duracao peso]
   (let [atividade-lower (clojure.string/lower-case atividade)
         peso-num (or (try (Double/parseDouble (str peso)) (catch Exception _ 70)) 70)]
     (if-let [cal-por-min (exercicios-calorias atividade-lower)]
-      ;; Calcular calorias: cal/min * duração * (peso / 70)
       (int (* cal-por-min duracao (/ peso-num 70)))
-      ;; Fallback: tentar API se disponível
       (try
         (let [resposta (http/get "https://api.api-ninjas.com/v1/caloriesburned"
                                  {:headers      {"X-Api-Key" api-key}
@@ -95,9 +85,7 @@
               itens    (:body resposta)]
           (when (seq itens)
             (int (:total_calories (first itens)))))
-        (catch Exception e (* 5 duracao)))))) ; Valor padrão
-
-;; ── Operações sobre o estado (efeitos controlados) ───────────────────────────
+        (catch Exception e (* 5 duracao)))))) 
 
 (defn salvar-usuario! [dados]
   (reset! db/usuario dados))
