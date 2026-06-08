@@ -3,7 +3,22 @@
             [clj-http.client :as http]
             [cheshire.core :as json]))
 
-(def api-key "9HvymEeY7y8Hd4Lz98jRiZYEYfVKGprk5")
+(def api-key (System/getenv "API_NINJAS_KEY"))
+
+(defn- numero? [v]
+  (number? v))
+
+(defn- calorias-do-item [item]
+  (let [cal (:calories item)]
+    (cond
+      (numero? cal) (int cal)
+      :else (let [carbs (or (:carbohydrates_total_g item) 0)
+                  fat   (or (:fat_total_g item) 0)
+                  prot  (if (numero? (:protein_g item)) (:protein_g item) 0)]
+              (int (+ (* carbs 4) (* fat 9) (* prot 4)))))))
+
+(defn- peso-para-libras [peso-kg]
+  (* (or peso-kg 70) 2.20462))
 
 (defn data-no-periodo? [data inicio fim]
   (and (>= (compare data inicio) 0)
@@ -18,40 +33,68 @@
 (defn buscar-calorias-alimento [nome quantidade]
   (try
     (let [query    (str quantidade "g " nome)
-          _        (println "[DEBUG] Buscando alimento:" query "com chave:" (if (empty? api-key) "VAZIA" "OK"))
+          _        (println "[DEBUG] Buscando alimento:" query)
+          _        (println "[DEBUG] Chave API:" (if (empty? api-key) "VAZIA ❌" "PRESENTE ✓"))
           resposta (http/get "https://api.api-ninjas.com/v1/nutrition"
                              {:headers      {"X-Api-Key" api-key}
                               :query-params {"query" query}
                               :as           :json
                               :socket-timeout 3000
                               :conn-timeout 3000})
+          status   (:status resposta)
           itens    (:body resposta)]
+      (println "[DEBUG] Status da resposta:" status)
       (println "[DEBUG] Resposta da API:" itens)
-      (when (seq itens)
-        (int (:calories (first itens)))))
+      (if (= status 200)
+        (if (seq itens)
+          (let [calorias (calorias-do-item (first itens))]
+            (println "[SUCCESS] Calorias encontradas:" calorias)
+            calorias)
+          (do
+            (println "[AVISO] API retornou lista vazia para:" query)
+            100))
+        (do
+          (println "[ERRO] API retornou status:" status)
+          100)))
     (catch Exception e 
       (do
-        (println "[ERRO] Falha ao buscar calorias de alimento:" (.getMessage e))
+        (println "[ERRO] Falha ao buscar calorias de alimento:")
+        (println "[ERRO]" (.getMessage e))
+        (.printStackTrace e)
         100))))
 (defn buscar-calorias-exercicio [atividade duracao peso]
-  (let [peso-num (or (try (Double/parseDouble (str peso)) (catch Exception _ 70)) 70)]
+  (let [peso-kg  (or (try (Double/parseDouble (str peso)) (catch Exception _ 70)) 70)
+        peso-lbs (peso-para-libras peso-kg)]
     (try
-      (let [_        (println "[DEBUG] Buscando exercício:" atividade "duração:" duracao "peso:" peso-num)
+      (let [_        (println "[DEBUG] Buscando exercício:" atividade "duração:" duracao "peso:" peso-kg "kg (" peso-lbs "lbs)")
             resposta (http/get "https://api.api-ninjas.com/v1/caloriesburned"
                                {:headers      {"X-Api-Key" api-key}
                                 :query-params {"activity"  atividade
-                                               "weight"    peso-num
+                                               "weight"    peso-lbs
                                                "duration"  duracao}
                                 :as           :json
                                 :socket-timeout 3000
                                 :conn-timeout 3000})
+            status   (:status resposta)
             itens    (:body resposta)]
+        (println "[DEBUG] Status da resposta exercício:" status)
         (println "[DEBUG] Resposta da API exercício:" itens)
-        (when (seq itens)
-          (int (:total_calories (first itens)))))
+        (if (= status 200)
+          (if (seq itens)
+            (let [calorias (int (:total_calories (first itens)))]
+              (println "[SUCCESS] Calorias de exercício encontradas:" calorias)
+              calorias)
+            (do
+              (println "[AVISO] API retornou lista vazia para exercício:" atividade)
+              (* 5 duracao)))
+          (do
+            (println "[ERRO] API retornou status:" status)
+            (* 5 duracao))))
       (catch Exception e 
         (do
-          (println "[ERRO] Falha ao buscar calorias de exercício:" (.getMessage e))
+          (println "[ERRO] Falha ao buscar calorias de exercício:")
+          (println "[ERRO]" (.getMessage e))
+          (.printStackTrace e)
           (* 5 duracao))))))
 
 (defn salvar-usuario! [dados]
