@@ -1,0 +1,7 @@
+(when-let [requires (resolve 'clojure.main/repl-requires)] (clojure.core/apply clojure.core/require @requires))
+clj꞉trabfinal-api.handler꞉> 
+
+; Results are configured to appear in the Output Terminal.
+; To reveal the output, use the command:
+; > Calva: Show/Open the result output destination
+clj꞉trabfinal-api.handler꞉> 
