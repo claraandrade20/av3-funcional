@@ -7,7 +7,8 @@
             [hiccup.core :refer [html]]
             [hiccup.page :refer [html5]]
             [clj-http.client :as http]
-            [cheshire.core :as json])
+            [cheshire.core :as json]
+            [clojure.java.browse :as browse])
   (:gen-class))
 
 (def backend "http://localhost:3000")
@@ -412,6 +413,18 @@
 (def app
   (wrap-defaults app-routes (assoc-in site-defaults [:security :anti-forgery] false)))
 
-(defn -main [& _]
-  (run-jetty app {:port 3001 :join? false})
-  (println "Frontend rodando em http://localhost:3001"))
+(defn- abrir-navegador! [porta]
+  (let [url (str "http://localhost:" porta "/")]
+    (println (str "Abrindo " url " no navegador..."))
+    (try
+      (browse/browse-url url)
+      (catch Exception _
+        (println (str "Nao foi possivel abrir o navegador. Acesse manualmente: " url))))))
+
+(defn -main [& args]
+  (let [porta (Integer/parseInt (or (first args) "3001"))]
+    (println (str "Frontend iniciando na porta " porta "..."))
+    (future
+      (Thread/sleep 800)
+      (abrir-navegador! porta))
+    (run-jetty app {:port porta :join? true})))
