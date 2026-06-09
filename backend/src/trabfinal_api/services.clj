@@ -3,7 +3,8 @@
             [clj-http.client :as http]
             [cheshire.core :as json]))
 
-(def api-key (System/getenv "API_NINJAS_KEY"))
+(defn- api-key []
+  (System/getenv "API_NINJAS_KEY"))
 
 (defn- numero? [v]
   (number? v))
@@ -34,9 +35,10 @@
   (try
     (let [query    (str quantidade "g " nome)
           _        (println "[DEBUG] Buscando alimento:" query)
-          _        (println "[DEBUG] Chave API:" (if (empty? api-key) "VAZIA ❌" "PRESENTE ✓"))
+          key      (api-key)
+          _        (println "[DEBUG] Chave API:" (if (empty? key) "VAZIA ❌" "PRESENTE ✓"))
           resposta (http/get "https://api.api-ninjas.com/v1/nutrition"
-                             {:headers      {"X-Api-Key" api-key}
+                             {:headers      {"X-Api-Key" key}
                               :query-params {"query" query}
                               :as           :json
                               :socket-timeout 3000
@@ -67,8 +69,9 @@
         peso-lbs (peso-para-libras peso-kg)]
     (try
       (let [_        (println "[DEBUG] Buscando exercício:" atividade "duração:" duracao "peso:" peso-kg "kg (" peso-lbs "lbs)")
+            key      (api-key)
             resposta (http/get "https://api.api-ninjas.com/v1/caloriesburned"
-                               {:headers      {"X-Api-Key" api-key}
+                               {:headers      {"X-Api-Key" key}
                                 :query-params {"activity"  atividade
                                                "weight"    peso-lbs
                                                "duration"  duracao}

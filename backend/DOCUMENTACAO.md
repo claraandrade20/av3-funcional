@@ -60,7 +60,7 @@ Toda a persistência é feita em **Atoms** do Clojure — a forma idiomática de
 
 ```clojure
 {:tipo       :alimento
- :nome       "Banana"
+ :nome       "banana"
  :data       "2026-06-01"
  :quantidade 100          ; gramas
  :calorias   89}          ; valor positivo = caloria consumida
@@ -70,7 +70,7 @@ Toda a persistência é feita em **Atoms** do Clojure — a forma idiomática de
 
 ```clojure
 {:tipo     :exercicio
- :nome     "Corrida"
+ :nome     "running"
  :data     "2026-06-01"
  :duracao  30             ; minutos
  :calorias -300}          ; valor negativo = caloria gasta
@@ -100,10 +100,46 @@ $env:API_NINJAS_KEY = "sua-chave-aqui"
 
 | Função                                             | Endpoint chamado                                                | Retorno                           |
 | -------------------------------------------------- | --------------------------------------------------------------- | --------------------------------- |
-| `buscar-calorias-alimento nome qtd`                | `GET /v1/nutrition?query=100g Banana`                           | calorias (int) ou `nil` se falhar |
-| `buscar-calorias-exercicio atividade duracao peso` | `GET /v1/caloriesburned?activity=corrida&weight=70&duration=30` | calorias (int) ou `nil` se falhar |
+| `buscar-calorias-alimento nome qtd`                | `GET /v1/nutrition?query=100g banana`                           | calorias (int); fallback `100` se falhar |
+| `buscar-calorias-exercicio atividade duracao peso` | `GET /v1/caloriesburned?activity=running&weight=154&duration=30` | calorias (int); fallback `5 × minutos` se falhar |
 
-Se a chamada falhar (sem chave, sem internet, erro de API), o valor padrão é `0`.
+Se a chamada falhar (sem chave, sem internet, nome não reconhecido, erro de API), o backend usa valores padrão: **100** para alimento e **5 × duração** para exercício.
+
+### Nomes em inglês aceitos pela API Ninjas
+
+A consulta enviada ao endpoint de nutrição tem o formato `{quantidade}g {nome}` (ex.: `150g chicken breast`). O nome deve estar em **inglês** — termos em português quase sempre retornam `[]`.
+
+#### Alimentos validados (testados com `100g {nome}`)
+
+`banana`, `apple`, `rice`, `bread`, `egg`, `milk`, `chicken breast`, `salmon`, `beef`, `pasta`, `potato`, `broccoli`, `cheese`, `yogurt`, `orange`, `avocado`, `tuna`, `pizza`, `lettuce`, `tomato`, `oatmeal`, `peanut butter`, `strawberry`, `grape`, `carrot`, `beans`, `corn`, `shrimp`, `tofu`, `hamburger`
+
+#### Exercícios validados (testados com 30 min, peso ~150 lbs)
+
+`running`, `walking`, `cycling`, `swimming`, `yoga`, `dancing`, `hiking`, `jumping rope`, `soccer`, `basketball`, `tennis`, `boxing`, `rowing`, `volleyball`, `golf`, `weight lifting`, `stairs`
+
+#### Tradução PT → EN (referência rápida)
+
+| Português | Use na API |
+| --------- | ---------- |
+| frango | `chicken breast` |
+| feijão | `beans` |
+| corrida | `running` |
+| caminhada | `walking` |
+| musculação | `weight lifting` |
+| escada | `stairs` |
+
+#### Nomes que **não** funcionam — use a alternativa
+
+| Evite | Motivo | Use em vez disso |
+| ----- | ------ | ---------------- |
+| `frango`, `corrida`, `feijao` | português | `chicken breast`, `running`, `beans` |
+| `weightlifting` | grafia não reconhecida | `weight lifting` |
+| `stair climbing` | não listado | `stairs` |
+| `pilates`, `elliptical` | não retornam resultados | `yoga`, `cycling` |
+
+#### Plano gratuito
+
+No free tier, `calories` e `protein_g` vêm como `"Only available for premium subscribers."`. O backend calcula calorias com `(carboidratos × 4) + (gordura × 9) + (proteína × 4)` quando o campo numérico não está disponível — proteínas ficam de fora, subestimando carnes e ovos.
 
 ### Funções com efeito (modificam estado)
 
@@ -126,8 +162,8 @@ Se a chamada falhar (sem chave, sem internet, erro de API), o valor padrão é `
 | `GET`  | `/`              | —                                                        | `{"status":"ok"}`                             |
 | `POST` | `/api/usuario`   | `{"altura":170,"peso":70,"idade":25,"sexo":"M"}`         | dados salvos (201)                            |
 | `GET`  | `/api/usuario`   | —                                                        | dados do usuário (200) ou erro (404)          |
-| `POST` | `/api/alimento`  | `{"nome":"Banana","data":"2026-06-01","quantidade":100}` | transação criada com calorias (201)           |
-| `POST` | `/api/exercicio` | `{"nome":"Corrida","data":"2026-06-01","duracao":30}`    | transação criada com calorias negativas (201) |
+| `POST` | `/api/alimento`  | `{"nome":"banana","data":"2026-06-01","quantidade":100}` | transação criada com calorias (201)           |
+| `POST` | `/api/exercicio` | `{"nome":"running","data":"2026-06-01","duracao":30}`    | transação criada com calorias negativas (201) |
 | `GET`  | `/api/extrato`   | `?inicio=2026-06-01&fim=2026-06-30`                      | lista de transações do período                |
 | `GET`  | `/api/saldo`     | `?inicio=2026-06-01&fim=2026-06-30`                      | `{"saldo": -211}`                             |
 
@@ -182,12 +218,12 @@ curl -X POST http://localhost:3000/api/usuario \
 # Registrar alimento
 curl -X POST http://localhost:3000/api/alimento \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Banana","data":"2026-06-01","quantidade":100}'
+  -d '{"nome":"banana","data":"2026-06-01","quantidade":100}'
 
 # Registrar exercício
 curl -X POST http://localhost:3000/api/exercicio \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Corrida","data":"2026-06-01","duracao":30}'
+  -d '{"nome":"running","data":"2026-06-01","duracao":30}'
 
 # Consultar extrato
 curl "http://localhost:3000/api/extrato?inicio=2026-06-01&fim=2026-06-30"

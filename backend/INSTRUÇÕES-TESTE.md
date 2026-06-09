@@ -54,7 +54,7 @@ $env:API_NINJAS_KEY
 
 ```clojure
 ; Teste simples
-(services/buscar-calorias-alimento "Banana" 100)
+(services/buscar-calorias-alimento "banana" 100)
 
 ; Deve retornar um número (ex: 89)
 ; Verifique o console para logs: 
@@ -80,10 +80,10 @@ $env:API_NINJAS_KEY
 (services/salvar-usuario! {:altura 170 :peso 70 :idade 25 :sexo "M"})
 
 ; Registrar alimento
-(services/registrar-alimento! {:nome "Maçã" :data "2026-06-08" :quantidade 150})
+(services/registrar-alimento! {:nome "apple" :data "2026-06-08" :quantidade 150})
 
 ; Registrar exercício
-(services/registrar-exercicio! {:nome "Walking" :data "2026-06-08" :duracao 45})
+(services/registrar-exercicio! {:nome "walking" :data "2026-06-08" :duracao 45})
 
 ; Ver todas as transações
 (services/obter-extrato "2026-06-08" "2026-06-08")
@@ -128,7 +128,7 @@ curl -X POST http://localhost:3000/api/usuario ^
 # 3. Registrar alimento (DEVE ter calorias!)
 curl -X POST http://localhost:3000/api/alimento ^
   -H "Content-Type: application/json" ^
-  -d "{\"nome\":\"Banana\",\"data\":\"2026-06-08\",\"quantidade\":100}"
+  -d "{\"nome\":\"banana\",\"data\":\"2026-06-08\",\"quantidade\":100}"
 
 # Resposta esperada:
 # {"tipo":"alimento","nome":"Banana","data":"2026-06-08","quantidade":100,"calorias":89}
@@ -136,7 +136,7 @@ curl -X POST http://localhost:3000/api/alimento ^
 # 4. Registrar exercício
 curl -X POST http://localhost:3000/api/exercicio ^
   -H "Content-Type: application/json" ^
-  -d "{\"nome\":\"Running\",\"data\":\"2026-06-08\",\"duracao\":30}"
+  -d "{\"nome\":\"running\",\"data\":\"2026-06-08\",\"duracao\":30}"
 
 # 5. Ver extrato
 curl "http://localhost:3000/api/extrato?inicio=2026-06-08&fim=2026-06-08"
@@ -177,10 +177,26 @@ curl "http://localhost:3000/api/saldo?inicio=2026-06-08&fim=2026-06-08"
 ### Se receber lista vazia:
 
 ```
-[AVISO] API retornou lista vazia para: 100g banana
+[AVISO] API retornou lista vazia para: 150g frango grelhado
 ```
 
-**Solução:** Alimento não encontrado - tente outro nome (ex: "apple" em inglês)
+**Solução:** a API só reconhece nomes em **inglês**. Troque pelo termo correto:
+
+| ❌ Não use | ✅ Use na API |
+|-----------|---------------|
+| frango, frango grelhado | `chicken breast` |
+| corrida | `running` |
+| caminhada | `walking` |
+| feijão | `beans` |
+| maçã | `apple` |
+| banana | `banana` |
+| musculação | `weight lifting` |
+
+**Alimentos que funcionam:** `banana`, `apple`, `rice`, `bread`, `egg`, `milk`, `chicken breast`, `salmon`, `beef`, `pasta`, `potato`, `broccoli`, `cheese`, `yogurt`, `orange`, `avocado`, `tuna`, `pizza`, `lettuce`, `tomato`, `oatmeal`, `peanut butter`, `strawberry`, `grape`, `carrot`, `beans`, `corn`, `shrimp`, `tofu`, `hamburger`
+
+**Exercícios que funcionam:** `running`, `walking`, `cycling`, `swimming`, `yoga`, `dancing`, `hiking`, `jumping rope`, `soccer`, `basketball`, `tennis`, `boxing`, `rowing`, `volleyball`, `golf`, `weight lifting`, `stairs`
+
+Lista completa e tabela PT → EN: veja `README.md` e `DOCUMENTACAO.md`.
 
 ---
 
