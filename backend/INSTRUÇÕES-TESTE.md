@@ -1,186 +1,171 @@
-# Instruções de Teste - Backend Calva + APIs Ninjas
+# Instruções de Teste — Backend (Calva + curl)
 
-## 📋 Resumo das Correções
+Guia para validar a API localmente com o REPL do Calva ou com requisições HTTP.
 
-1. ✅ **Chave API** agora usa variável de ambiente `API_NINJAS_KEY`
-2. ✅ **Logs melhorados** mostram detalhes de erro e status HTTP
-3. ✅ **Tratamento de erros** verifica se API respondeu corretamente (status 200)
+## O que o backend faz hoje
 
----
-
-## 🚀 Como Iniciar com Calva
-
-### Opção 1: Jack-in (Recomendado)
-
-1. Abra VS Code na pasta `backend`
-2. Pressione `Ctrl+Alt+C` → `Ctrl+Alt+J` (ou F1 e procure "Calva: Start a Project REPL")
-3. Escolha **Leiningen** quando perguntado
-4. Aguarde até ver `clj꞉trabfinal-api.handler꞉> ` no terminal
-
-### Opção 2: Conectar a REPL Existente
-
-Se você já tem um REPL rodando:
-1. Pressione `Ctrl+Alt+C` → `Ctrl+Alt+C` (ou F1 procure "Calva: Connect to a running REPL")
-2. Escolha a porta (geralmente `:nREPL port`)
+1. **Chave API Ninjas** embutida em `src/trabfinal_api/services.clj` — não precisa configurar variável de ambiente para rodar.
+2. **Logs de debug** mostram status HTTP, resposta da API e mensagens de erro.
+3. **Fallbacks** — alimento retorna `100` kcal; exercício retorna `5 × minutos` quando a API falha ou não reconhece o nome.
+4. **Peso em libras** — a API de exercícios recebe o peso do usuário convertido de kg para lbs (`peso × 2,20462`).
+5. **Plano gratuito** — quando `calories` vem bloqueado, o backend estima com `(carboidratos × 4) + (gordura × 9) + (proteína × 4)`.
 
 ---
 
-## 🔧 Configurar Variável de Ambiente
+## Iniciar com Calva
 
-**No PowerShell (Windows):**
+### Opção 1: Jack-in (recomendado)
 
-```powershell
-$env:API_NINJAS_KEY = "9HvymEeY7y8Hd4Lz98jRiZYEYfVKGprk5"
-```
+1. Abra o VS Code na pasta `backend`
+2. `Ctrl+Alt+C` → `Ctrl+Alt+J` (ou F1 → "Calva: Start a Project REPL")
+3. Escolha **Leiningen**
+4. Aguarde o prompt `clj꞉trabfinal-api.handler꞉> ` no terminal
 
-**Verificar se está set:**
+### Opção 2: Conectar a um REPL existente
 
-```powershell
-$env:API_NINJAS_KEY
-```
+1. `Ctrl+Alt+C` → `Ctrl+Alt+C` (ou F1 → "Calva: Connect to a running REPL")
+2. Selecione a porta `:nREPL port`
 
 ---
 
-## 🧪 Testar no Calva REPL
+## Testar no REPL do Calva
 
-### 1. Carregar o namespace
+### 1. Carregar namespaces
 
 ```clojure
 (require '[trabfinal-api.services :as services])
 (require '[trabfinal-api.db :as db])
 ```
 
-### 2. Testarbusca de calorias de alimento
+### 2. Busca de calorias de alimento
 
 ```clojure
-; Teste simples
 (services/buscar-calorias-alimento "banana" 100)
-
-; Deve retornar um número (ex: 89)
-; Verifique o console para logs: 
-; [DEBUG] Buscando alimento: 100g Banana
-; [DEBUG] Status da resposta: 200
-; [SUCCESS] Calorias encontradas: 89
+;; Esperado: número (ex.: 89)
+;; Logs:
+;; [DEBUG] Buscando alimento: 100g banana
+;; [DEBUG] Chave API: PRESENTE ✓
+;; [DEBUG] Status da resposta: 200
+;; [SUCCESS] Calorias encontradas: 89
 ```
 
-### 3. Testar busca de calorias de exercício
+### 3. Busca de calorias de exercício
 
 ```clojure
-; Teste com peso
 (services/buscar-calorias-exercicio "running" 30 70)
-
-; Deve retornar um número positivo
-; Logs devem mostrar: [SUCCESS] Calorias de exercício encontradas: XXX
+;; Esperado: número positivo (ex.: ~300)
+;; O peso 70 kg é convertido para ~154 lbs na chamada à API
 ```
 
-### 4. Testar fluxo completo
+### 4. Fluxo completo
 
 ```clojure
-; Salvar usuário
-(services/salvar-usuario! {:altura 170 :peso 70 :idade 25 :sexo "M"})
+;; Cadastrar usuário (nome e peso — usados pelo frontend)
+(services/salvar-usuario! {:nome "João Silva" :peso 70})
 
-; Registrar alimento
-(services/registrar-alimento! {:nome "apple" :data "2026-06-08" :quantidade 150})
+;; Registrar alimento (nome em inglês!)
+(services/registrar-alimento! {:nome "apple" :data "2026-06-09" :quantidade 150})
 
-; Registrar exercício
-(services/registrar-exercicio! {:nome "walking" :data "2026-06-08" :duracao 45})
+;; Registrar exercício (nome em inglês!)
+(services/registrar-exercicio! {:nome "walking" :data "2026-06-09" :duracao 45})
 
-; Ver todas as transações
-(services/obter-extrato "2026-06-08" "2026-06-08")
+;; Extrato do dia
+(services/obter-extrato "2026-06-09" "2026-06-09")
 
-; Ver saldo
-(services/obter-saldo "2026-06-08" "2026-06-08")
+;; Saldo do dia (alimentos positivos + exercícios negativos)
+(services/obter-saldo "2026-06-09" "2026-06-09")
 ```
 
 ---
 
-## 🌐 Testar as Rotas HTTP
+## Testar rotas HTTP
 
-### Iniciar servidor (do REPL do Calva)
+### Iniciar servidor pelo REPL
 
 ```clojure
-; Executar no REPL:
 (require '[trabfinal-api.handler :as handler])
-
-; Iniciar servidor na porta 3000
 (def server (handler/-main "3000"))
 ```
 
-**Ou via terminal:**
+### Iniciar pelo terminal
 
-```bash
+```powershell
 cd backend
-$env:API_NINJAS_KEY = "9HvymEeY7y8Hd4Lz98jRiZYEYfVKGprk5"
 lein ring server-headless
 ```
 
-### Testar endpoints com curl
+### Endpoints com curl (PowerShell / cmd)
 
-```bash
-# 1. Verificar se servidor está rodando
+```powershell
+# 1. Health check
 curl http://localhost:3000/
 
 # 2. Cadastrar usuário
 curl -X POST http://localhost:3000/api/usuario ^
   -H "Content-Type: application/json" ^
-  -d "{\"altura\":170,\"peso\":70,\"idade\":25,\"sexo\":\"M\"}"
+  -d "{\"nome\":\"João Silva\",\"peso\":70}"
 
-# 3. Registrar alimento (DEVE ter calorias!)
+# 3. Registrar alimento
 curl -X POST http://localhost:3000/api/alimento ^
   -H "Content-Type: application/json" ^
-  -d "{\"nome\":\"banana\",\"data\":\"2026-06-08\",\"quantidade\":100}"
+  -d "{\"nome\":\"banana\",\"data\":\"2026-06-09\",\"quantidade\":100}"
 
-# Resposta esperada:
-# {"tipo":"alimento","nome":"Banana","data":"2026-06-08","quantidade":100,"calorias":89}
+# Resposta esperada (exemplo):
+# {"tipo":"alimento","nome":"banana","data":"2026-06-09","quantidade":100,"calorias":89}
 
 # 4. Registrar exercício
 curl -X POST http://localhost:3000/api/exercicio ^
   -H "Content-Type: application/json" ^
-  -d "{\"nome\":\"running\",\"data\":\"2026-06-08\",\"duracao\":30}"
+  -d "{\"nome\":\"running\",\"data\":\"2026-06-09\",\"duracao\":30}"
 
-# 5. Ver extrato
-curl "http://localhost:3000/api/extrato?inicio=2026-06-08&fim=2026-06-08"
+# 5. Extrato
+curl "http://localhost:3000/api/extrato?inicio=2026-06-09&fim=2026-06-09"
 
-# 6. Ver saldo
-curl "http://localhost:3000/api/saldo?inicio=2026-06-08&fim=2026-06-08"
+# 6. Saldo
+curl "http://localhost:3000/api/saldo?inicio=2026-06-09&fim=2026-06-09"
 ```
 
 ---
 
-## 🐛 Debugging - O que observar nos logs
+## Debugging — o que observar nos logs
 
-### Se voltar apenas 100 calorias:
-
-```
-[DEBUG] Chave API: VAZIA ❌          ← Problema: variável não configurada
-[ERRO] Falha ao buscar calorias...   ← Ver mensagem de erro completa
-```
-
-**Solução:** Configure `$env:API_NINJAS_KEY` antes de rodar
-
-### Se receber erro 401:
-
-```
-[ERRO] API retornou status: 401
-```
-
-**Solução:** Chave API inválida ou expirada - verifique em https://api-ninjas.com
-
-### Se receber erro 429:
-
-```
-[ERRO] API retornou status: 429
-```
-
-**Solução:** Muitas requisições - limite da API atingido (60/mês com free tier)
-
-### Se receber lista vazia:
+### Alimento sempre com 100 kcal
 
 ```
 [AVISO] API retornou lista vazia para: 150g frango grelhado
 ```
 
-**Solução:** a API só reconhece nomes em **inglês**. Troque pelo termo correto:
+**Causas:** nome em português, alimento não reconhecido ou limite da API.
+
+**Solução:** use nomes em **inglês** (tabela abaixo).
+
+### Erro 401
+
+```
+[ERRO] API retornou status: 401
+```
+
+**Solução:** chave inválida ou expirada — atualize `api-ninjas-key` em `services.clj` com uma chave de [api-ninjas.com](https://api-ninjas.com).
+
+### Erro 429
+
+```
+[ERRO] API retornou status: 429
+```
+
+**Solução:** limite do plano gratuito (60 req/mês). Aguarde ou reduza os testes.
+
+### Exercício com valor redondo (ex.: 150 para 30 min)
+
+```
+[AVISO] API retornou lista vazia para exercício: corrida
+```
+
+**Solução:** use `running`, `walking`, etc. O fallback é `5 × minutos`.
+
+---
+
+## Nomes em inglês (obrigatório na API Ninjas)
 
 | ❌ Não use | ✅ Use na API |
 |-----------|---------------|
@@ -196,26 +181,24 @@ curl "http://localhost:3000/api/saldo?inicio=2026-06-08&fim=2026-06-08"
 
 **Exercícios que funcionam:** `running`, `walking`, `cycling`, `swimming`, `yoga`, `dancing`, `hiking`, `jumping rope`, `soccer`, `basketball`, `tennis`, `boxing`, `rowing`, `volleyball`, `golf`, `weight lifting`, `stairs`
 
-Lista completa e tabela PT → EN: veja `README.md` e `DOCUMENTACAO.md`.
+Tabelas completas PT → EN: [`README.md`](../README.md) e [`DOCUMENTACAO.md`](DOCUMENTACAO.md).
 
 ---
 
-## 📋 Checklist de Verificação
+## Checklist de verificação
 
-- [ ] Variável `$env:API_NINJAS_KEY` está configurada?
-- [ ] Calva está conectado (vendo `clj꞉trabfinal-api.handler꞉> `)?
-- [ ] Logs mostram status 200 da API?
-- [ ] Calorias retornam valores > 0 (não apenas 100)?
-- [ ] Servidor responde em http://localhost:3000?
+- [ ] Calva conectado (prompt `clj꞉trabfinal-api.handler꞉> `)?
+- [ ] Logs mostram `[DEBUG] Chave API: PRESENTE ✓`?
+- [ ] Status HTTP `200` nas chamadas à API Ninjas?
+- [ ] Calorias de alimento diferentes de `100` (com nomes em inglês)?
+- [ ] Servidor responde em `http://localhost:3000/`?
 - [ ] Endpoints retornam JSON válido?
 
 ---
 
-## 📞 Próximas etapas
+## Se ainda houver problemas
 
-Se ainda tiver problemas:
-
-1. **Reinicie o Calva:** Pressione `Ctrl+Alt+C` → `Ctrl+Alt+Q` (quit) e depois `Ctrl+Alt+J` (novo jack-in)
-2. **Limpe o cache:** Delete a pasta `target/` e rode `lein clean`
-3. **Verifique a internet:** Teste em navegador: `https://api.api-ninjas.com/v1/nutrition?query=100g+banana`
-4. **Veja os logs completos:** O terminal Calva deve mostrar `[DEBUG]`, `[ERROR]`, etc.
+1. **Reinicie o Calva:** `Ctrl+Alt+C` → `Ctrl+Alt+Q`, depois `Ctrl+Alt+J`
+2. **Limpe o build:** `lein clean` (remove a pasta `target/`)
+3. **Teste a internet:** abra `https://api.api-ninjas.com/v1/nutrition?query=100g+banana` no navegador (com header `X-Api-Key`)
+4. **Confira a chave:** valor em `services.clj` deve coincidir com a chave ativa na sua conta API Ninjas

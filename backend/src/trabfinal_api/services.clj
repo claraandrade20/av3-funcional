@@ -3,8 +3,10 @@
             [clj-http.client :as http]
             [cheshire.core :as json]))
 
+(def ^:private api-ninjas-key "9HvymEeY7y8Hd4Lz98jRiZYEYfVKGprk5QYUfyQh")
+
 (defn- api-key []
-  (System/getenv "API_NINJAS_KEY"))
+  api-ninjas-key)
 
 (defn- numero? [v]
   (number? v))

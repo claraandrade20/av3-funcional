@@ -2,11 +2,11 @@
 
 ## Visão Geral
 
-O backend é uma API REST escrita em **Clojure** usando **Ring** e **Compojure**. Ele é responsável por:
+O backend é uma API REST em **Clojure** com **Ring** e **Compojure**. Responsabilidades:
 
-1. Armazenar dados do usuário e transações (calorias consumidas e gastas) em memória
-2. Consultar APIs externas para obter os valores calóricos
-3. Expor endpoints JSON consumidos pelo frontend
+1. Armazenar usuário e transações (calorias consumidas e gastas) em memória
+2. Consultar a **API Ninjas** para valores calóricos
+3. Expor endpoints JSON consumidos pelo frontend (`http://localhost:3001`)
 
 ---
 
@@ -14,56 +14,57 @@ O backend é uma API REST escrita em **Clojure** usando **Ring** e **Compojure**
 
 ```
 backend/
-├── project.clj                          # Dependências e configuração do projeto
-└── src/
-    └── trabfinal_api/
-        ├── db.clj                       # Estado em memória (atoms)
-        ├── services.clj                 # Lógica de negócio + chamadas às APIs externas
-        └── handler.clj                  # Rotas HTTP + middleware
+├── project.clj
+├── DOCUMENTACAO.md
+├── INSTRUÇÕES-TESTE.md
+└── src/trabfinal_api/
+    ├── db.clj          # Estado em memória (atoms)
+    ├── services.clj    # Lógica de negócio + API Ninjas
+    └── handler.clj     # Rotas HTTP + middleware
 ```
 
 ---
 
 ## Dependências (`project.clj`)
 
-| Biblioteca           | Versão | Uso                                         |
-| -------------------- | ------ | ------------------------------------------- |
-| `compojure`          | 1.6.1  | Roteamento HTTP                             |
-| `ring/ring-defaults` | 0.3.2  | Middlewares padrão do Ring                  |
-| `ring/ring-json`     | 0.5.0  | Parse e serialização automática de JSON     |
-| `cheshire`           | 5.10.0 | Serialização JSON                           |
-| `clj-http`           | 3.12.3 | Cliente HTTP para chamadas às APIs externas |
+| Biblioteca | Versão | Uso |
+|------------|--------|-----|
+| `compojure` | 1.6.1 | Roteamento HTTP |
+| `ring/ring-defaults` | 0.3.2 | Middlewares padrão |
+| `ring/ring-json` | 0.5.0 | Parse/serialização JSON |
+| `cheshire` | 5.10.0 | JSON |
+| `clj-http` | 3.12.3 | Cliente HTTP (API Ninjas) |
 
 ---
 
 ## Camada de Dados — `db.clj`
 
 ```clojure
-(def usuario  (atom nil))
-(def transacoes (atom []))
+(def usuario    (atom nil))
+(def transacoes (atom '()))
 ```
 
-Toda a persistência é feita em **Atoms** do Clojure — a forma idiomática de gerenciar estado mutável em programação funcional. Os dados são perdidos ao reiniciar o servidor (comportamento esperado conforme o enunciado).
+Persistência em **Atoms** — dados são perdidos ao reiniciar o servidor.
 
 ### Estrutura dos dados
 
-**Usuário:**
+**Usuário** (campos usados pelo frontend):
 
 ```clojure
-{:altura 170   ; cm
- :peso   70    ; kg
- :idade  25
- :sexo   "M"}
+{:nome "João Silva"
+ :peso 70}    ; kg — usado no cálculo de exercícios
 ```
+
+O endpoint `POST /api/usuario` aceita qualquer mapa JSON; o frontend envia `nome` e `peso`.
 
 **Transação de alimento:**
 
 ```clojure
 {:tipo       :alimento
  :nome       "banana"
- :data       "2026-06-01"
+ :data       "2026-06-09"
  :quantidade 100          ; gramas
- :calorias   89}          ; valor positivo = caloria consumida
+ :calorias   89}          ; positivo = consumo
 ```
 
 **Transação de exercício:**
@@ -71,85 +72,80 @@ Toda a persistência é feita em **Atoms** do Clojure — a forma idiomática de
 ```clojure
 {:tipo     :exercicio
  :nome     "running"
- :data     "2026-06-01"
+ :data     "2026-06-09"
  :duracao  30             ; minutos
- :calorias -300}          ; valor negativo = caloria gasta
+ :calorias -300}          ; negativo = gasto
 ```
 
 ---
 
 ## Camada de Serviços — `services.clj`
 
-### Funções puras (sem efeitos colaterais)
+### Funções auxiliares
 
-| Função                                      | Descrição                                                                                           |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `data-no-periodo? data inicio fim`          | Retorna `true` se a data está entre inicio e fim (comparação lexicográfica de strings `YYYY-MM-DD`) |
-| `filtrar-por-periodo transacoes inicio fim` | Usa `filter` para retornar só as transações do período                                              |
-| `calcular-saldo transacoes`                 | Usa `reduce + map` para somar todas as calorias (alimentos positivos + exercícios negativos)        |
+| Função | Descrição |
+|--------|-----------|
+| `api-key` | Retorna a chave da API Ninjas (definida em `api-ninjas-key`) |
+| `numero?` | Predicado para valores numéricos |
+| `calorias-do-item` | Extrai `:calories` do item ou estima com macros (plano gratuito) |
+| `peso-para-libras` | Converte peso em kg para libras (`× 2,20462`) |
 
-### Chamadas às APIs externas
+### Funções puras
 
-A aplicação usa a **API Ninjas** (`api.api-ninjas.com`). A chave deve ser configurada na variável de ambiente `API_NINJAS_KEY`.
+| Função | Descrição |
+|--------|-----------|
+| `data-no-periodo?` | `true` se a data está entre `inicio` e `fim` (strings `YYYY-MM-DD`) |
+| `filtrar-por-periodo` | `filter` sobre transações do período |
+| `calcular-saldo` | `reduce +` sobre `:calorias` |
 
-```bash
+### API Ninjas
 
-# Windows (PowerShell)
-$env:API_NINJAS_KEY = "sua-chave-aqui"
+Base: `https://api.api-ninjas.com`. A chave fica em `services.clj`:
+
+```clojure
+(def ^:private api-ninjas-key "sua-chave-aqui")
 ```
 
-| Função                                             | Endpoint chamado                                                | Retorno                           |
-| -------------------------------------------------- | --------------------------------------------------------------- | --------------------------------- |
-| `buscar-calorias-alimento nome qtd`                | `GET /v1/nutrition?query=100g banana`                           | calorias (int); fallback `100` se falhar |
-| `buscar-calorias-exercicio atividade duracao peso` | `GET /v1/caloriesburned?activity=running&weight=154&duration=30` | calorias (int); fallback `5 × minutos` se falhar |
+| Função | Endpoint | Parâmetros | Fallback |
+|--------|----------|------------|----------|
+| `buscar-calorias-alimento` | `GET /v1/nutrition` | `query` = `"{qtd}g {nome}"` | `100` |
+| `buscar-calorias-exercicio` | `GET /v1/caloriesburned` | `activity`, `weight` (lbs), `duration` (min) | `5 × duração` |
 
-Se a chamada falhar (sem chave, sem internet, nome não reconhecido, erro de API), o backend usa valores padrão: **100** para alimento e **5 × duração** para exercício.
+Todas as chamadas usam timeout de 3 s e logam status, resposta e erros no console.
 
-### Nomes em inglês aceitos pela API Ninjas
+#### Estimativa de calorias (plano gratuito)
 
-A consulta enviada ao endpoint de nutrição tem o formato `{quantidade}g {nome}` (ex.: `150g chicken breast`). O nome deve estar em **inglês** — termos em português quase sempre retornam `[]`.
+Quando `calories` ou `protein_g` vêm bloqueados (`"Only available for premium subscribers."`), o backend calcula:
 
-#### Alimentos validados (testados com `100g {nome}`)
+```
+(carbs × 4) + (fat × 9) + (protein × 4)
+```
 
-`banana`, `apple`, `rice`, `bread`, `egg`, `milk`, `chicken breast`, `salmon`, `beef`, `pasta`, `potato`, `broccoli`, `cheese`, `yogurt`, `orange`, `avocado`, `tuna`, `pizza`, `lettuce`, `tomato`, `oatmeal`, `peanut butter`, `strawberry`, `grape`, `carrot`, `beans`, `corn`, `shrimp`, `tofu`, `hamburger`
+Carnes e ovos podem parecer subestimados porque a proteína costuma vir bloqueada no free tier.
 
-#### Exercícios validados (testados com 30 min, peso ~150 lbs)
+#### Nomes em inglês
 
-`running`, `walking`, `cycling`, `swimming`, `yoga`, `dancing`, `hiking`, `jumping rope`, `soccer`, `basketball`, `tennis`, `boxing`, `rowing`, `volleyball`, `golf`, `weight lifting`, `stairs`
+A consulta de nutrição usa `{quantidade}g {nome}`. Termos em português retornam lista vazia → fallback `100`.
 
-#### Tradução PT → EN (referência rápida)
+**Alimentos validados:** `banana`, `apple`, `rice`, `bread`, `egg`, `milk`, `chicken breast`, `salmon`, `beef`, `pasta`, `potato`, `broccoli`, `cheese`, `yogurt`, `orange`, `avocado`, `tuna`, `pizza`, `lettuce`, `tomato`, `oatmeal`, `peanut butter`, `strawberry`, `grape`, `carrot`, `beans`, `corn`, `shrimp`, `tofu`, `hamburger`
 
-| Português | Use na API |
-| --------- | ---------- |
-| frango | `chicken breast` |
-| feijão | `beans` |
-| corrida | `running` |
-| caminhada | `walking` |
-| musculação | `weight lifting` |
-| escada | `stairs` |
+**Exercícios validados:** `running`, `walking`, `cycling`, `swimming`, `yoga`, `dancing`, `hiking`, `jumping rope`, `soccer`, `basketball`, `tennis`, `boxing`, `rowing`, `volleyball`, `golf`, `weight lifting`, `stairs`
 
-#### Nomes que **não** funcionam — use a alternativa
+| Evite | Use em vez disso |
+|-------|------------------|
+| `weightlifting` | `weight lifting` |
+| `stair climbing` | `stairs` |
+| `pilates`, `elliptical` | `yoga`, `cycling` |
 
-| Evite | Motivo | Use em vez disso |
-| ----- | ------ | ---------------- |
-| `frango`, `corrida`, `feijao` | português | `chicken breast`, `running`, `beans` |
-| `weightlifting` | grafia não reconhecida | `weight lifting` |
-| `stair climbing` | não listado | `stairs` |
-| `pilates`, `elliptical` | não retornam resultados | `yoga`, `cycling` |
+### Funções com efeito (`!`)
 
-#### Plano gratuito
-
-No free tier, `calories` e `protein_g` vêm como `"Only available for premium subscribers."`. O backend calcula calorias com `(carboidratos × 4) + (gordura × 9) + (proteína × 4)` quando o campo numérico não está disponível — proteínas ficam de fora, subestimando carnes e ovos.
-
-### Funções com efeito (modificam estado)
-
-| Função                      | O que faz                                            |
-| --------------------------- | ---------------------------------------------------- |
-| `salvar-usuario! dados`     | `reset!` no atom `usuario`                           |
-| `registrar-alimento! body`  | chama API → cria mapa → `swap! conj` em `transacoes` |
-| `registrar-exercicio! body` | idem, mas calorias são negadas (gastas)              |
-| `obter-extrato inicio fim`  | lê `@transacoes` e filtra por período                |
-| `obter-saldo inicio fim`    | calcula soma das calorias filtradas                  |
+| Função | Comportamento |
+|--------|---------------|
+| `salvar-usuario!` | `reset!` em `usuario` |
+| `registrar-alimento!` | API → transação → `swap!` em `transacoes` |
+| `registrar-exercicio!` | API → calorias negativas → `swap!` |
+| `obter-extrato` | Filtra `@transacoes` por período |
+| `obter-saldo` | Soma calorias do extrato |
 
 ---
 
@@ -157,90 +153,89 @@ No free tier, `calories` e `protein_g` vêm como `"Only available for premium su
 
 ### Endpoints
 
-| Método | Rota             | Body / Query                                             | Resposta                                      |
-| ------ | ---------------- | -------------------------------------------------------- | --------------------------------------------- |
-| `GET`  | `/`              | —                                                        | `{"status":"ok"}`                             |
-| `POST` | `/api/usuario`   | `{"altura":170,"peso":70,"idade":25,"sexo":"M"}`         | dados salvos (201)                            |
-| `GET`  | `/api/usuario`   | —                                                        | dados do usuário (200) ou erro (404)          |
-| `POST` | `/api/alimento`  | `{"nome":"banana","data":"2026-06-01","quantidade":100}` | transação criada com calorias (201)           |
-| `POST` | `/api/exercicio` | `{"nome":"running","data":"2026-06-01","duracao":30}`    | transação criada com calorias negativas (201) |
-| `GET`  | `/api/extrato`   | `?inicio=2026-06-01&fim=2026-06-30`                      | lista de transações do período                |
-| `GET`  | `/api/saldo`     | `?inicio=2026-06-01&fim=2026-06-30`                      | `{"saldo": -211}`                             |
+| Método | Rota | Body / Query | Resposta |
+|--------|------|--------------|----------|
+| `GET` | `/` | — | `{"status":"ok","mensagem":"Calculadora de Calorias API"}` |
+| `POST` | `/api/usuario` | `{"nome":"João","peso":70}` | dados salvos (201) |
+| `GET` | `/api/usuario` | — | usuário (200) ou 404 |
+| `POST` | `/api/alimento` | `{"nome":"banana","data":"2026-06-09","quantidade":100}` | transação (201) |
+| `POST` | `/api/exercicio` | `{"nome":"running","data":"2026-06-09","duracao":30}` | transação (201) |
+| `GET` | `/api/extrato` | `?inicio=&fim=` | lista de transações |
+| `GET` | `/api/saldo` | `?inicio=&fim=` | `{"saldo": -211}` |
 
-### Middleware (cadeia de transformação)
+### Middleware
 
 ```
-Requisição HTTP
-      ↓
-wrap-defaults (api-defaults)  — configurações básicas Ring
-      ↓
-wrap-cors                     — adiciona headers CORS (*) para o frontend
-      ↓
-wrap-json-response            — serializa resposta Clojure → JSON
-      ↓
-wrap-json-body                — deserializa body JSON → mapa Clojure com keywords
-      ↓
-Rota (handler)
+Requisição
+    ↓ wrap-defaults (api-defaults)
+    ↓ wrap-cors          — Access-Control-Allow-Origin: *
+    ↓ wrap-json-response
+    ↓ wrap-json-body     — keywords no body
+    ↓ rota
 ```
 
-O middleware `wrap-cors` também responde a requisições `OPTIONS` (preflight) com status 200, necessário para navegadores com CORS.
+`wrap-cors` responde `OPTIONS` com 200 (preflight para o frontend).
+
+### Inicialização
+
+```clojure
+(defn -main [& args]
+  ;; porta padrão 3000
+  (run-jetty app {:port porta :join? true}))
+```
 
 ---
 
 ## Como Executar
 
-```bash
-# 1. Entrar na pasta do backend
+```powershell
 cd backend
-
-# 2. (Opcional) configurar a chave da API
-$env:API_NINJAS_KEY = "sua-chave"
-
-# 3. Iniciar o servidor
-lein ring server
-
-# Ou sem abrir o navegador
 lein ring server-headless
 ```
 
-A API ficará disponível em `http://localhost:3000`.
+API em `http://localhost:3000`.
 
 ---
 
-## Exemplos de Uso (curl)
+## Exemplos curl
 
 ```bash
-# Cadastrar usuário
 curl -X POST http://localhost:3000/api/usuario \
   -H "Content-Type: application/json" \
-  -d '{"altura":170,"peso":70,"idade":25,"sexo":"M"}'
+  -d '{"nome":"João Silva","peso":70}'
 
-# Registrar alimento
 curl -X POST http://localhost:3000/api/alimento \
   -H "Content-Type: application/json" \
-  -d '{"nome":"banana","data":"2026-06-01","quantidade":100}'
+  -d '{"nome":"banana","data":"2026-06-09","quantidade":100}'
 
-# Registrar exercício
 curl -X POST http://localhost:3000/api/exercicio \
   -H "Content-Type: application/json" \
-  -d '{"nome":"running","data":"2026-06-01","duracao":30}'
+  -d '{"nome":"running","data":"2026-06-09","duracao":30}'
 
-# Consultar extrato
-curl "http://localhost:3000/api/extrato?inicio=2026-06-01&fim=2026-06-30"
-
-# Consultar saldo
-curl "http://localhost:3000/api/saldo?inicio=2026-06-01&fim=2026-06-30"
+curl "http://localhost:3000/api/extrato?inicio=2026-06-09&fim=2026-06-09"
+curl "http://localhost:3000/api/saldo?inicio=2026-06-09&fim=2026-06-09"
 ```
 
 ---
 
-## Princípios Funcionais Aplicados
+## Princípios Funcionais
 
-| Princípio                     | Onde aparece                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| **Imutabilidade**             | Mapas e vetores são imutáveis; `swap!`/`reset!` criam novos valores            |
-| **Funções puras**             | `filtrar-por-periodo`, `calcular-saldo`, `data-no-periodo?` — sem side effects |
-| **Funções de ordem superior** | `filter`, `map`, `reduce` em `services.clj`                                    |
-| **Composição**                | Cadeia de middlewares com `->` (threading macro) em `handler.clj`              |
-| **Separação de efeitos**      | Funções puras isoladas das funções com `!` (efeito colateral)                  |
-| **Sem loops imperativos**     | Nenhum `for`, `while`, `loop`, `doseq` — apenas recursão via `reduce`/`filter` |
+| Princípio | Onde |
+|-----------|------|
+| Imutabilidade | Mapas imutáveis; `swap!`/`reset!` em atoms |
+| Funções puras | `filtrar-por-periodo`, `calcular-saldo`, `data-no-periodo?` |
+| Ordem superior | `filter`, `map`, `reduce` |
+| Composição | Middlewares com `->` em `handler.clj` |
+| Efeitos isolados | Funções com sufixo `!` |
+| Sem loops imperativos | Sem `for`, `while`, `loop`, `doseq` |
+
+---
+
+## Limitações
+
+- Dados só em memória
+- Um único usuário por instância
+- Sem autenticação
+- Sem cache da API Ninjas
+- Nomes de alimentos/exercícios em inglês
+- Plano gratuito limita campos nutricionais e volume de requisições
