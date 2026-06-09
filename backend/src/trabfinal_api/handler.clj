@@ -4,6 +4,7 @@
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+            [trabfinal-api.db :as db]
             [trabfinal-api.services :as services])
   (:gen-class))
 
@@ -59,7 +60,12 @@
       wrap-cors
       (wrap-defaults api-defaults)))
 
+(defn init []
+  (db/zerar!)
+  (println "Dados zerados — comece com exemplos novos."))
+
 (defn -main [& args]
+  (init)
   (let [porta (Integer/parseInt (or (first args) "3000"))]
     (println (str "Servidor iniciando na porta " porta "..."))
     (run-jetty app {:port porta :join? true})))

@@ -12,7 +12,8 @@
                  [cheshire "5.10.0"]
                  [clj-http "3.12.3"]]
   :plugins [[lein-ring "0.12.5"]]
-  :ring {:handler trabfinal-api.handler/app}
+  :ring {:handler trabfinal-api.handler/app
+         :init trabfinal-api.handler/init}
   :profiles
   {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]
                         [ring/ring-mock "0.3.2"]]}})
