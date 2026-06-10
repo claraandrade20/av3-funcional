@@ -299,7 +299,10 @@
        (if usuario
          [:div
           [:p "Bem-vindo, " [:strong (:nome usuario)] "! 👋"]
-          [:p "Seu peso: " [:strong (str (:peso usuario) " kg")]]]
+          [:p "Seu peso: " [:strong (str (:peso usuario) " kg")]]
+          [:p "Sua altura: " [:strong (str (:altura usuario) " cm")]]
+          [:p "Sua idade: " [:strong (str (:idade usuario) " anos")]]
+          [:p "Sexo: " [:strong (:sexo usuario)]]]
          [:p "Configure seus dados para começar"])]
       [:div {:class "saldo-card"}
        [:div {:class "saldo-label"} "Saldo Calórico de Hoje (" (hoje) ")"]
@@ -321,6 +324,18 @@
        [:div {:class "form-group"}
         [:label "Peso (kg)"]
         [:input {:type "number" :step "0.1" :name "peso" :value (or (:peso u) "") :placeholder "ex: 75.5" :required true}]]
+       [:div {:class "form-group"}
+        [:label "Altura (cm)"]
+        [:input {:type "number" :step "0.1" :name "altura" :value (or (:altura u) "") :placeholder "ex: 175" :required true}]]
+       [:div {:class "form-group"}
+        [:label "Idade (anos)"]
+        [:input {:type "number" :name "idade" :value (or (:idade u) "") :placeholder "ex: 30" :min "1" :required true}]]
+       [:div {:class "form-group"}
+        [:label "Sexo"]
+        [:select {:name "sexo" :required true}
+         [:option {:value "" :selected (nil? (:sexo u))} "Selecione"]
+         [:option {:value "masculino" :selected (= "masculino" (:sexo u))} "Masculino"]
+         [:option {:value "feminino" :selected (= "feminino" (:sexo u))} "Feminino"]]]
        [:button "Salvar Dados"]])))
 
 (defn page-alimento [msg]
@@ -389,9 +404,13 @@
   (GET "/" [] (page-index))
 
   (GET  "/usuario" [msg] (page-usuario msg))
-  (POST "/usuario" [nome peso]
+  (POST "/usuario" [nome peso altura idade sexo]
     (post-json (str backend "/api/usuario")
-               {:nome nome :peso (Double/parseDouble peso)})
+               {:nome nome
+                :peso (Double/parseDouble peso)
+                :altura (Double/parseDouble altura)
+                :idade (Integer/parseInt idade)
+                :sexo sexo})
     (redirect "/usuario?msg=Salvo+com+sucesso"))
 
   (GET  "/alimento" [msg] (page-alimento msg))
@@ -422,6 +441,8 @@
         (println (str "Nao foi possivel abrir o navegador. Acesse manualmente: " url))))))
 
 (defn -main [& args]
+  (println "Zerando dados do sistema no backend...")
+  (post-json (str backend "/api/zerar") {})
   (let [porta (Integer/parseInt (or (first args) "3001"))]
     (println (str "Frontend iniciando na porta " porta "..."))
     (future

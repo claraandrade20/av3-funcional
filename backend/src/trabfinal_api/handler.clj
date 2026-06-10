@@ -50,6 +50,10 @@
   (GET "/api/saldo" [inicio fim]
     {:status 200 :body {:saldo (services/obter-saldo inicio fim)}})
 
+  (POST "/api/zerar" []
+    (db/zerar!)
+    {:status 200 :body {:mensagem "Dados zerados"}})
+
   (route/not-found {:status 404 :body {:erro "Rota não encontrada"}}))
 
 
